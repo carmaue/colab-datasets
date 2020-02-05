@@ -1,0 +1,406 @@
+---
+title: "Importación e Integración de datos"
+output: html_notebook
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+
+
+
+# Importación de datos
+
+## Introducción
+
+### El tratamiento de los datos en el contexto del proceso de data science
+![El tratammiento de los datos es un suproceso del proceso general de la ciencia de los datos](https://www.dropbox.com/s/b3hwv654uiqr209/Obtenci%C3%B3n%20y%20Tratamiento%20de%20Datos.png?dl=1)
+
+El tratamiento de los datos es un suproceso dentro del proceso de data science que se compone a su vez de otras actividades. En este notebook nos centramos en: 
+
+ * La **importación e integración de los datos**.
+ 
+ 
+## Fuentes de Variabilidad en las  entrada de datos
+
+El formato de los datos:
+
+ * Datos en ficheros textuales planos (csv, txt, ).
+ * Datos de MS Office (usualmente Excel o Access)
+ * Datos de bases de datos (MySQL, Postgres, Oracle, etc.)
+ * Datos en formatos textuales estructurados (JSON, YAML, XML, etc.)
+ * Datos en formatos de paquetes estadísticos (SPSS, STRATA, SAS, etc.)
+ 
+La localización de los datos:
+  * Sistema local de ficheros
+  * Unidad compartida de red
+  * La web
+
+La propia complejidad y diversidad de la estructura de la información almacenada, que puede no corresponderse con el formato que se ha usado para almacenarlo.
+
+Comenzaremos centrándonos en la variabilidad asociada al formato, y usando el sistema de ficheros local del sistema como localizacióná por defecto de los datos.
+
+## Ficheros textuales planos
+
+### Ficheros CSV
+
+Un fichero CSV es un fichero de texto plano donde la primera fila representa los nombres de las variables y los valores están separados por "," o ";".
+
+R incorpora funciones est?ndar para leer ficheros CSV sin la necesidad de cargar ningua librería:
+
+```{r Lectura de datos en formato CSV con funciones básicas de R} 
+getwd()
+swimming_pools <- read.csv("./swimming_pools.csv")
+```
+Esta función carga los datos (y al estar en un notebook de R markdown no los muestra en la página, por eso tenemos que imprimrlos con la función  kable) pero si no los asignamos a una variable no podremos trabajar con ellos:
+
+```{r Datos cargados (piscinas),echo=FALSE, results='asis'}
+knitr::kable(swimming_pools, format = 'html')
+```
+
+Si queremos ver la estructura del dataframe que hemos cargado podemos usar la función str():
+```{r Visualización de la estructura de un dataset con la función str}
+str(swimming_pools)
+```
+
+Existe una opción para que las cadenas que cargemos no se transformen automáticamente en factores: stringsAsFactors=F
+```{r Lectura de datos impidiendo la generación automática de factores}
+datos <- read.csv("swimming_pools.csv",stringsAsFactors=F)
+```
+
+Podemos echar un vistazo a los datos usando la función _str()_:
+
+**Ejercicio**:
+```{r Ejercicio 1}
+
+```
+
+Sin embargo el paquete del tidyverse readr proporciona funciones alternativas para la lectura de la mayoría de los tipos de ficheros que  funcionan mejor que las funciones por defecto:
+
+
+
+**read_csv()** lee ficheros csv que usan ',' como separador
+
+**read_csv2()** lee ficheros csv que usan ';' como separador (estos ficheros son comunes en los paises donde la , se usa como separador de decimales, como España), 
+
+
+Las funciones de readr hacen un mejor trabajo que las básicas infiriendo el tipo de columnas de los datos a partir de los valores, y además si hay valores inesperados que no cuadran con el tipo de los datos inferidos proporcionarán dicha información, ayudándonos a encontrar errores o problemas en los datos leídos. 
+
+**Ejercicio**: Cargar la librerías del tidyverse y el conjunto de datos de piscinas en un tibble llamado 'piscinas' usando las librerias de readr. Mostrar la estructura del conjunto de datos y sus estadísticas básicas (con _summary()_).
+
+```{r Ejercicio 2}
+
+```
+
+### Fichero textuales delimitados
+
+Otro formato muy común de fichero de datos son los ficheros delimitados por algún tipo de cadena o carácter (por ejemplo tabuladores).
+
+En R tenemos una función similar a la anterior para cargar este tipo de ficheros:
+
+```{r Lectura de fichero de datos con valores delimitados}
+getwd()
+dir()
+
+hotdogs <-read.delim("hotdogs.txt",stringsAsFactors=F,header=F)
+```
+
+```{r Impresión de los datos cargados, echo=FALSE, results='asis'}
+knitr::kable(hotdogs, format = 'html')
+```
+
+El conjunto de datos de perritos calientes (hotdog.txt) contiene datos sobre marcas , clasificados por tipo: carne de res, carne y aves. El dataset proporciona la cantidad de sodio y calor?as  para cada marca.
+
+**Ejercicio**: Cargar el dataset de perritos calientes en un tibble llamado 'hotdogs' usando la función de readr read_tsv() y modificar los nombres de las variables en el dataset de perritos por 'tipo','sodio' y 'calorias'.
+
+```{r Renombrado de las columnas del conjunto de datos de los perritos calientes}
+names(hotdogs) <-c("Tipo","Sodio","Calorias")
+```
+
+
+Si el carácter o subcadena delimitadora es un poco más exótica, tendremos especificarla nosotros con una función distinta:
+
+```{r Lectura de datos delimitados con carácteres o cadenas no estándar}
+estados <-read.delim("states2.txt",sep='/',header = T)
+str(estados)
+```
+```{r Impresión del resultado de los datos cargados,echo=FALSE, results='asis'}
+knitr::kable(estados, format = 'html')
+```
+El parámetro _header_ indica que la primera fila contiene el nombre de las columnas (por defecto toma valor a Falso).
+El parámetro delim especifica la cadena delimitadora.
+
+Hay otras dos funciones que nos serán muy útiles: a la hora de visualizar la estructura de los datos, _summary()_; y para visualizar los primeros valores de un dataframe _head()_.
+
+**Ejercicio**: Use esas dos funciones sobre el dataset anterior.
+
+```{r Ejercicio 3: Usar las funciones summary y head en nuestros datos de estados americanos}
+
+```
+
+En readr tenemos funciones también para la lectura de datos delimtados:
+
+**read_tsv()** lee ficheros delimitados por tabuladores
+
+**[read_delim()](https://www.rdocumentation.org/packages/readr/versions/1.3.1/topics/read_delim)** lee ficheros de texto plano donde podemos indicar los delimitadores tanto de columna, como de fila.
+
+**Ejercicio**: Leer el fichero "states2.txt" usando las funciones de readr y almacenarlo en un tibbl llamado states. Comprobar el resultado usando las funciones summary, head y str.
+
+```{r Ejercicio 4: Leer el fichero states2.txt y visualizar su estructura y datos iniciales}
+
+```
+
+
+## Ficheros textuales estructurados
+
+### JSON
+
+JSON es un formato textual para representar información estructurada muy popular que está basado en la sintaxis de la notación de objetos de Javascript.
+
+La mayoría de las APIs modernas usan JSON como formato subyacente a HTTP para la transmisión de información estructurada. 
+
+Si combinamos las capacidad para realizar peticiones HTTP del paquete [httr](https://www.rdocumentation.org/packages/httr/versions/1.4.0), con las capacidades de importación de json de R, podremos consumir APIs e importar la información que éstas proporcionan de manera muy cómoda.
+
+Por ejemplo:
+
+```{r Lectura de datos en formato json desde OMDB}
+# Cargamos las librer?as y lanzamos la petici?n
+library(httr)
+url <- "http://www.omdbapi.com/?apikey=72bc447a&t=Annie+Hall&y=&plot=short&r=json"
+resp <- GET(url)
+
+# Imprimimos el objeto respuesta directamente
+print(resp)
+
+# Imprimimos el contenido de resp como texto
+print(content(resp,as="text"))
+
+# Obtenermos el contenido de resp como objetos e imprimimos todo su
+# contenido y algunos campos
+jsonObj <- content(resp)
+print(jsonObj)
+jsonObj$Ratings
+```
+
+Si necesitamos un control más detallado del tratamiento que se da a la estructura del JSON de cara a la importación del dataset, o el acceso a la API se hace con GETs simples, es recomendable usar el paquete [jsonlite](https://cran.r-project.org/web/packages/jsonlite/index.html). Por ejemplo, si consumimos la API de datos financieros Quandl para ver la evolución de las acciones de Facebook:
+
+```{r Importación de datos financieros de Facebook con jsonlite}
+library(jsonlite)
+
+quandl_url <- "https://www.quandl.com/api/v3/datasets/WIKI/FB/data.json?auth_token=i83asDsiWUUyfoypkgMz"
+
+quandl_data <- fromJSON(quandl_url)
+
+
+str(quandl_data)
+
+head(quandl_data)
+```
+
+Vamos a procesar y limpiar un poco más estos datos:
+Primero transformaremos la matriz de cadenas en un dataframe (más exactamente en un tibble):
+
+```{r Transformación de los datos de cotización en un Tibble}
+facRebookData<- as.tibble(quandl_data$dataset_data$data)
+```
+
+
+```{r Representación de los datos obtenidos,echo=FALSE, results='asis'}
+knitr::kable(facebookData[1:10,], format = 'html')
+```
+
+Ahora vamos a cambiar el nombre de las variables por los nombres reales (que venían en el campo column_names):
+
+```{r Renombrado de variables con los nombre reales}
+names(facebookData)<- quandl_data$dataset_data$column_names
+```
+
+
+```{r Representación del dataset procesado, echo=FALSE, results='asis'}
+knitr::kable(facebookData[1:10,], format = 'html')
+```
+
+Parece que nuestro dataset de datos de cotización de facebook está mucho mejor, pero las columnas siguen siendo todavía de tipo cadena en todos los casos. 
+```{r Estructura del dataset de datos financieros de Facebook}
+str(facebookData)
+```
+
+Vamos a transformar el tipo de nuestras variables:
+
+```{r Tranformación de tipos de las variables}
+facebookData$Date <- as.Date(facebookData$Date)
+facebookData$Open <- as.numeric(facebookData$Open)
+facebookData$High <- as.numeric(facebookData$High)
+facebookData$Low <- as.numeric(facebookData$Low)
+facebookData$Close <- as.numeric(facebookData$Close)
+facebookData$Volume <- as.numeric(facebookData$Volume)
+str(facebookData)
+```
+```{r Representación de los datos una vez transformados,echo=FALSE, results='asis'}
+knitr::kable(facebookData[1:10,], format = 'html')
+```
+
+*Ejercicio*: Represente visualmente los datos de evolución de la cotización en apertura de las acciones de Facebook a lo largo del tiempo.
+
+```{r Ejercicio 5: Representar los datos de evolución temporal de cotización en apertura de Facebook}
+
+```
+
+
+## Ficheros binarios y  otros formatos
+
+Los ficheros binarios suelen estar asociados a aplicaciones concretas (como EXCEL, base de datos, etc.) La codificación de la información en el fichero es específica de cada aplicación, por lo que no podemos ver el contenido del fichero con cualquier editor, sino que necesitaremos la aplicación concreta asociada.
+
+Afortunadamente R es un sistema extensible que incorpora paquetes que permiten importar datos de casi cualquier tipo de fichero.
+Para la lectura de esos tipos de ficheros binarios debemos acudir normalmente a  paquetes específicos, por lo que no cubriremos en detalle cada tipo de fichero y paquete concreto. Sin embargo, se proporcionan enlaces a buenos tutoriales para los tipos de ficheros más comunes:
+
+ * [Microsft Excel](https://www.datacamp.com/community/tutorials/r-tutorial-read-excel-into-r)
+ * [Ficheros de SAS,STATA, y SPSS](https://www.datacamp.com/community/tutorials/r-data-import-tutorial#spss)
+ * [Conectarse a MySQL y leer una tabla](https://www.r-bloggers.com/accessing-mysql-through-r/)
+ 
+ **Ejercicio (Opcional)**: Cargar los datos del fichero excel _latitude.xls_.
+ 
+ 
+ 
+```{r Ejercicio 6: Carga de datos del fichero latitude.xls}
+
+```
+
+## Importación de información no estructurada
+
+R incorpora mecanismos para la importación de información no estructurada, pero dichas capacidades quedan fuera del objeto de este curso, puesto que existen asignaturas específicas sobre este tema en el máster. 
+
+Sin embargo, si el alumno está interesado en utilizar web scraping para la obtención de datos del trabajo final, le recomendamos [este tutorial sobre el paquete rvest](https://blog.rstudio.com/2014/11/24/rvest-easy-web-scraping-with-r/).
+
+## Importación desde la web
+
+Si los ficheros están en alguno de los formatos especificados anteriormente, la lectura de la información a través de http suele estar integrada directamente en los propios paquetes, por lo que normalmente basta con sustituir el nombre del fichero local por una url y el resto del proceso será el mismo. Por ejemplo:  
+
+
+```{r Carga de datos desde la web}
+url_delim <- "http://s3.amazonaws.com/assets.datacamp.com/production/course_1478/datasets/potatoes.txt"
+patatas <- read_tsv(url_delim)
+summary(patatas)
+```
+
+Cuando los paquetes que leen del formato que queremos usar no integran automáticamente el uso de URLs, siempre podemos descargarnos nosotros el fichero y cargarlo de manera local con la función [download.file()](https://www.rdocumentation.org/packages/utils/versions/3.5.2/topics/download.file).
+
+
+## Resolución de problemas durante la importación de datos
+
+Durante la importación de datos se pueden generar problemas, que vienen asociados principalmente con el tipo de datos que se infiere para las variables.
+
+readr incorpora un dataset de ejemplo para ver cómo pueden presentarse estos problemas:
+
+```{r Lectura de conjunto de datos de ejemplos de problemas de lectura}
+challenge <- read_csv(readr_example("challenge.csv"))
+```
+
+Si queremos comprobar si readr ha detectado algún posible problema, siempre podemos llamar a la función problems sobre el tibble que se ha cargado
+```{r Información sobre problemas detectados al cargar los datos,echo=FALSE, results='asis'}
+knitr::kable(problems(challenge)[1:10,], format = 'html')
+```
+
+En este caso parece que los problemas vienen de que la primera columna no es en realidad un entero sino un flotante. Podemos especificar el formato de columnas a usar al importar los datos de la siguiente manera:
+
+
+```{r}
+challenge <- read_csv(
+  readr_example("challenge.csv"), 
+  col_types = cols(
+    x = col_double(),
+    y = col_character()
+  )
+)
+
+print(problems(challenge))
+str(challenge)
+tail(challenge)
+```
+Ya no hay problemas en problems(), pero eso no significa que no tengamos errores.
+Parece que estamos interpretando una fecha como una cadena, por lo que luego tendremos que 
+parsearla/convertirla. Podemo hacer que readr lo haga por nosotros de la siguente manera:
+
+```{r Especificación del tipo de datos de las columnas en readr}
+challenge <- read_csv(
+  readr_example("challenge.csv"), 
+  col_types = cols(
+    x = col_double(),
+    y = col_date()
+  )
+)
+str(challenge)
+tail(challenge)
+```
+
+# Integración de datos
+
+
+La integración de datos supone unir en un dataset los datos de varios datasets independientes según criterios coherentes con la semántica de los datos.
+
+Para ello es necesario identificar las distintas relaciones que se establecen entre los datos, y aplicar operaciones que generen datasets unidos conforme a esas relaciones.
+A veces es interesante crear un diagrama UML o Entidad Relación donde se hagán explícitas las distintas relaciones y se anoten las que vamos usar para nuestros diversos análisis y diagramas.
+
+El tipo más común de relación es aquella en la que las tablas tienen una o varias columnas compartidas que en al menos uno de los casos identifican a la observación correspondiente. Este es el típico caso de clave ajena / join en bases de datos relacionales.
+
+En el tydiverse hay tres familias de verbos diseñados para trabajar con datos relacionales:
+
+* **Mutating Joins**: que añaden nuevas variables a un dataset partir de observaciones coincidentes en otro. Como ya hemos dicho es el caso más común de relación.
+
+* **Filtering Joins**: que filtran las observaciones de un dataset en función de si coinciden o no con una observación en el otro.
+
+* **Operaciones de conjuntos**: que tratan las observaciones como si fueran elementos de un conjunto.
+
+
+Para trabajar con datos interesantes en esta sección utilizaremos un paquete de datos de vuelos de ejemplo proporcionado por readr, que tiene varios datasets:
+
+ * _airlines_: que contiene los datos de las aerolineas.
+ 
+```{r Lectura de datos de ejemplo de vuelos, echo=FALSE, results='asis'}
+#install.packages("nycflights13")
+library(nycflights13)
+knitr::kable(airlines[1:10,], format = 'html')
+```
+ * _airports_: que contiene los datos de los aeropuertos, identificado por su c?digo (columna faa).
+```{r Representación de los datos de vuelos leídos,echo=FALSE, results='asis'}
+knitr::kable(airports[1:10,], format = 'html')
+```
+ * _planes_: que contiene los datos de los aviones.
+```{r Datos de los aviones,echo=FALSE, results='asis'}
+knitr::kable(planes[1:10,], format = 'html')
+```
+ * _weather_: que contiene los datos del tiempo atmosférico en cada hora en cada aeropuerto.
+```{r Datos del tiempo en cada aeropuerto, echo=FALSE, results='asis'}
+knitr::kable(weather[1:10,], format = 'html')
+``` 
+ 
+Un diagrama describiendo las relaciones entre los conjuntos de datos sería:
+
+![Diagrama](https://d33wubrfki0l68.cloudfront.net/245292d1ea724f6c3fd8a92063dcd7bfb9758d02/5751b/diagrams/relational-nycflights.png)
+
+Donde las celdas sombreadas representan las columnas clave (que identifican un?vocamente las observaciones) de cada conjunto de datos. 
+
+Si usamos un diagrama de Venn para describir los distintos tipos de join tendríamos:
+
+![joins](https://d33wubrfki0l68.cloudfront.net/aeab386461820b029b7e7606ccff1286f623bae1/ef0d4/diagrams/join-venn.png)
+
+Veamos un ejemplo de join simple:
+
+```{r Ejemplo de join simple}
+flights2 <- flights %>% 
+  select(year:day, hour, origin, dest, tailnum, carrier)
+
+joined_flights <- flights2 %>%
+                    select(-origin, -dest) %>% 
+                    left_join(airlines, by = "carrier")
+```
+```{r Resultado del join, echo=FALSE, results='asis'}
+knitr::kable(joined_flights[1:10,], format = 'html')
+```
+
+
+Para más información sobre los tipos de join y el uso de operaciones de conjuntos para la gestión de datos relacionales con ejercicios, remitimos al alumno al capítulo correspondiente de [R for data Science](https://r4ds.had.co.nz/relational-data.html#filtering-joins) 
+
+
+

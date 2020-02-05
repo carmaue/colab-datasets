@@ -1,0 +1,563 @@
+---
+title: "Tratamiento de datos"
+output: html_notebook
+---
+# Tratamiento de datos b?sico con R
+
+## Introducci?n
+
+### El tratamiento de los datos en el contexto del proceso de data science
+![El tratammiento de los datos es un suproceso del proceso general de la ciencia de los datos](https://www.dropbox.com/s/b3hwv654uiqr209/Obtenci%C3%B3n%20y%20Tratamiento%20de%20Datos.png?dl=1)
+
+El tratamiento de los datos es un suproceso dentro del proceso de data science que se compone a su vez de otras actividades. En este notebook nos centramos en: 
+ * La **transformaci?n de los datos** al formato y estructura m?s apropiada para los algoritmos o an?lisis que deseamos aplicar.
+
+### Carga de librer?as
+
+Primero cargaremos las librer?as necesarias para trabajar:
+```{r Carga de librer?as}
+if (!require(pacman)){
+  install.packages("pacman")
+}
+library(pacman)
+p_load(gapminder,tidyr,dplyr,ggpubr,ggplot2)
+```
+tambi?n podr?an haberse instalado cargado todas las librer?as del tidyverse directamente con: 
+```
+install.packages("tidyverse")
+library(tidyverse)
+```
+
+
+Seguidamente visualizamos el contenido del dataset de gapminder:
+```{r Datos en gapminder,echo=FALSE, results='asis'}
+knitr::kable(gapminder[1:10,], format = 'html')
+``` 
+
+La variable gapminder es un **dataframe**: una estructura de datos rectangular  con filas y columnas similar a una tabla en una base de datos relacional, donde cada columna tiene asociado un tipo de datos concreto (entero, n?mero en coma flotante, un factor, etc...).
+
+La mayor?a de los an?lisis de datos complejos en R se basan en data frames.
+
+M?s espec?ficamente, gapminder es una variable de un subtipo concreto de dataframe usado en tidyverse, llamado **tibble** que funciona de manera m?s eficiente y coherente que los dataframes tradicionales de R y que es usado de manera general en todas las librer?as del tidyverse. Adem?s podemos ver el tama?o completo del tibble y el conjunto concreto de filas que se est?n visualizando en este momento.
+
+En general llamaremos **observaci?n** a cada una de las filas de un dataframe, y **variable** a cada una de las columnas.
+
+Siempre que trabajemos con dataframes es importante tener en mente una definici?n clara de lo que representa una observaci?n de ese dataframe, en este caso, dada observaci?n representa los datos de un pa?s para un a?o concreto. As? tenemos el continente al que pertenece (que se mantiene constante para cada pa?s con los a?os), la esperanza de vida (columna lifeExp), y el producto interior bruto per capita (gdpPercap) que es una medida bastante com?n de la reiqueza del pa?s, etc.
+
+# Tratamiento b?sico de datos
+
+## Transformando datsets salvajes en tidy data con tidyr
+
+Aunque los principios de Tidy Data nos resulten obvios, en realidad es muy com?n encontrar conjuntos de datos que nos los cumples, para solucionar esto, el paquete tidyr nos porporciona 2 funciones muy importantes:
+
+### gather
+
+  La funci?n  **gather()** se usa cuando los nombres de las variables codifican en realidad valores asociados a las observaciones.
+  
+  Un ejemplo de esto es la siguiente tabla :
+```{r Tabla con valores codificados en los nombres de las columnas, echo=FALSE, results='asis'}
+knitr::kable(table4a, format = 'html')
+```   
+  
+** ?Cual es el problema de esta tabla?**
+  
+  Vamos a recodificar los datos de esta tabla para hacer que siga los principios de Tidy Data.
+
+Necesitaremos transformar las variable 1999 y 2000 en otras dos variables, que llamaremos year y cases.
+
+![resultado](https://d33wubrfki0l68.cloudfront.net/3aea19108d39606bbe49981acda07696c0c7fcd8/2de65/images/tidy-9.png)
+
+Concretamente gather toma tres conjuntos de par?metros:
+
+ * Las columnas originales que conforman los valores de las columnas nuevas.
+ * El nombre que vamos a dar a la columna que representar? el valor asociado a cada columna a transformar en s? (en nuestro caso 'year'). A este par?metro se le llama la clave, y su nombre es "key".
+ * El nombre que vamos a dar a la columna que contendra los valores de las columnas a transformar (en nuestro caso 'cases'). A este par?metro se le llama el valor, y su nombre es "value".
+ 
+ 
+ Los  paquete dplyr y tidyr proporciona un conjunto de pasos at?micos, que llamaremos verbos, para transformar los datos.
+Cada vez que encadenemos el uso de un verbo, usaremos un pipe, que en R se escribe como **%>%**, su significado es: **toma todo lo que venga antes y apl?cale la acci?n que viene despu?s**, as? los verbos se especifican siempre depu?s de un pipe.
+
+As? nuestra operaci?n de transformaci?n de datos quedar?a como:
+```{r Recodificaci?n de datos para extraer valores de nombres de columna}
+table4amodificada <- table4a %>% 
+  gather(`1999`, `2000`, key = "year", value = "cases")
+```
+```{r Resultado de la recodificaci?n, echo=FALSE, results='asis'}
+knitr::kable(table4amodificada, format = 'html')
+```     
+  
+   Como se puede observar, en el resultado anterior las columnas originales han sido eliminadas.
+  
+  *Ejercicio*: Transforme la tabla 'table4b' de manera similar estableciendo como nombre de la columna clave 'year' y de la columna de valor 'population'. A continuaci?n, haga un left join entre los dos resultados para obtener una tabla que combina los datos de ambas tablas con una poblaci?n general y un n?mero de casos (de una enfermedad) por pa?s y a?o.
+  
+```{r Ejercicio 1: Transformar el conjunto de datos table4}
+
+```
+### spread
+  
+ La funci?n **spread()**  es opuesta a la anterior, y se usa cuando en una columna se est?n representando en realidad varias variables. Por ejemplo, analicemos el contenido del dataset 'table2'.
+ 
+```{r Representaci?n del conjunto de datos table2, echo=FALSE, results='asis'}
+knitr::kable(table2, format = 'html')
+```   
+  Si nos fijamos detenidamente, veremos que existe m?s de una observaci?n por a?o y pa?s, y que en realidad es la columna 'type' la que determina el significado real de la columna count (que representa tanto el conteo de casos de la enfermedad como la poblaci?n general del pa?s).
+
+Para que el conjunto de datos cumpla con los principios de tidy data, debemos realizar la siguiente transformaci?n:
+
+![Transformaci?n a relizar](https://d33wubrfki0l68.cloudfront.net/8350f0dda414629b9d6c354f87acf5c5f722be43/bcb84/images/tidy-8.png)
+
+Para ello usaremos la funci?n **spread()** que toma dos par?metros:
+ * La columna que contiene los nombres de las variables a crear, cuyo par?metro se llama "key", y que en nuestro caso ser? la columna type.
+ * La columna que contiene os valores de las distintas variables, cuyo par?metro se llama "value", y que en nuestro caso dera la columna count.
+ 
+ Por tanto, el resultado de aplicar spread a la tabla 2 ser?a:
+```{r Transformaci?n del conjunto de datos table2}
+table2modificada <- table2 %>%
+    spread(key = type, value = count)
+```
+
+
+```{r Representaci?n del conjunto de datos modificado, echo=FALSE, results='asis'}
+knitr::kable(table2modificada, format = 'html')
+```   
+### Separando y juntando valores de columnas con tidyr
+
+Otro caso muy com?n en conjuntos de datos que no siguen los principios de tidy data es tener columnas que contienen m?s de un valor. Por ejemplo observe el contenido de la tabla 3:
+```{r Contenido del conjunto de datos table3, echo=FALSE, results='asis'}
+knitr::kable(table3, format = 'html')
+```   
+La columna rate contiene en realidad dos variables, el n?mero de casos de la enfermedad y el n?mero de habitantes total (del p?is para ese a?o). 
+
+En esto casos podemos hacer uso de la funci?n **separate()** que toma hasta 4 par?metros:
+
+* El nombre de la columna a separar, en nuestro caso _rate_.
+* Un vector de cadenas (cuyo par?metro se llama **into**), que especifica los nombres de las nuevas columnas a crear, en nuestro caso ser?n _cases_ y _population_.
+* (Opcionalmente) El separador a usar para delimitar los distintos valores (cuyo par?metro se llama **sep**), y que en nuestro caso ser? _"/"_. Formalmente, **sep** admite expresiones regulares para expresar el separador, por lo que podemos tener varios tipos de separadores distintos. Adem?s, podemos especificar un vector de enteros y se usaran para separar el valor de la columna en base al n?mero de caracteres que indiquemos.
+* (Opcionalmente) Si queremos que se intente inferir el tipo de datos de las nuevas columnas y que se realice la converis?n al generarlas podemos especificarlo mediante el par?metro **convert**, que es booleano.
+
+As?, al aplicar la funci?n **separate()** a la tabla 3 obendr?amos:
+
+```{r Separando columnas con la funci?n separate}
+table3transformada<- table3 %>% 
+  separate(rate, into = c("cases", "population"), sep = "/")
+table3transformada
+str(table3transformada)
+```
+
+**Ejercicio**: Modificar la tabla3 de manera que el resultado contenga dos columnas, cases y population de tipo num?rico.
+
+```{r Ejercicio2: Modificar la tabla 3}
+
+```
+
+**Ejercicio**: Separar la columna year en siglo y a?o, de manera que por ejemplo para 1999 aparezcan 19 en siglo y 99 en a?o.
+
+```{r Ejercicio3: separa la columna year para que contenga siglo y a?o}
+
+```
+
+
+### Valores faltantes y la tranformaci?n de conjuntos de datos
+
+Una de las cosas sutiles cuando se transforman conjuntos de datos es c?mo vamos a tratar los valores faltantes. 
+Los valores pueden faltar en un conjunto de datos de dos maneras distintas:
+* De manera expl?cita, es decir, aparece el valor **NA** en alguna de las celdas de nuestro conjunto de datos.
+* De manera impl?cita, es decir, no hay ninguna celda asociada al dato faltante con un valor de **NA** pero sencillamente la fila que deber?a contener el valor no aparece en el conjunto de datos.
+
+Vamos a ilustrar esto con un dataset simple:
+
+```{r Creaci?n de un dataset simple}
+stocks <- tibble(
+  year   = c(2015, 2015, 2015, 2015, 2016, 2016, 2016),
+  qtr    = c(   1,    2,    3,    4,    2,    3,    4),
+  return = c(1.88, 0.59, 0.35,   NA, 0.92, 0.17, 2.66)
+)
+```
+```{r Resultado de la creaci?n de un dataset simple, echo=FALSE, results='asis'}
+knitr::kable(stocks, format = 'html')
+```   
+Concretamente en este dataset faltan los datos del cuarto cuatrimestre de 2015 (tiene asociado de manera expl?cita el valor NA en su correspondiente fila), y los datos del primer cuatrimestre de 2016 (no hay fila que contenga los valores 2016 y 1 en las columnas year y qtr respectivamente).
+
+La manera en que est? representado un dataset puede alterar la manera en que se expresan los valores faltantes, por ejemplo:
+```{r Transfromaci?n del dataset simple}
+stocks2<- stocks %>% 
+  spread(year, return)
+```
+```{r Resultado de la transformaci?n,echo=FALSE, results='asis'}
+knitr::kable(stocks2, format = 'html')
+``` 
+
+
+Otra herramienta interesante para hacer expl?cita la representaci?n de los valores faltantes es la funci?n **complete()**. Esta funci?n toma una serie de nombre de columnas y calcula todas las posibles combinaciones de sus valores. Una vez hecho esto, se asegura de que el dataset contiene al menos un fila con todos esos posibles valores, y si no est?n, lo a?ade con *NA*s en el resto de columnas.
+Por ejemplo:
+```{r Generaci?n de datos faltantes}
+stocks3 <- stocks %>% 
+  complete(year, qtr)
+```
+```{r Resultado de la generaci?n de daqtos faltantes,echo=FALSE, results='asis'}
+knitr::kable(stocks3, format = 'html')
+``` 
+Alternativamente, si queremos que no aparezcan **NA**s en el conjunto de datos transformado, podemos usar el par?metro _na.rm=TRUE_ en gather y spread, y eliminar? las filas que tendr?a un valor faltante (*NA*).
+
+## Tratamiento de datos usando los verbos de dyplr
+
+Los  paquetes dplyr y tidyr proporcionan un conjunto de pasos at?micos, que llamaremos verbos, para transformar los datos.
+Cada vez que encadenemos el uso de un verbo, usaremos un pipe, que en R se escribe como **%>%**, su significado es: **toma todo lo que venga antes y apl?cale la acci?n que viene despu?s**, as? los verbos se especifican siempre depu?s de un pipe.
+
+#### filter
+
+El primer verbo de dyplr que vamos a aprender a manejar es el verbo **filter**, que se usa cuando queremos usar solo un subconjunto de nuestras observaciones que cumplen cierta condici?n, as? para filtrar los datos de los pa?ses en 2007 tendr?amos.
+
+```{r Filtrado de datos}
+gapminder2007 <- gapminder %>% filter(year==2007)
+```
+```{r Resultado del filtrado,echo=FALSE, results='asis'}
+knitr::kable(gapminder2007, format = 'html')
+``` 
+
+
+Aqu? 'year==2007' es la condici?n de filtrado. Cuidado, recordad que '=' en R significa asignaci?n, mientras que '==' significa comparaci?n.
+
+
+**Ejercicio**: Os proponemos buscar los datos hist?ricos de Espa?a (llamada "Spain" en el dataset) del a?o 2002 .
+```{r Ejercicio 4: Filtrar los datos de Espa?a}
+
+```
+
+#### arrange
+
+Otro verbo muy interesante es *arrange*, que permite ordenar las observaciones del dataset basandose en los valores de sus varaibles.
+
+Por ejemplo para ordenar las observaciones de gapminder por producto interior bruto per c?pita har?amos:
+
+```{r Ordenaci?n por reta per c?pita}
+gapminder2007Ordenado <- gapminder2007 %>% arrange(gdpPercap)
+```
+Si queremos obtener los datos en orden descendente, har?amos:
+```{r Resultado de la ordenaci?n, echo=FALSE, results='asis'}
+knitr::kable(gapminder2007Ordenado, format = 'html')
+``` 
+
+
+
+Si queremos obtener los datos en orden descendente, har?amos:
+```{r Ordenaci?n de datos descendente}
+gapminder2007OrdDesc <- gapminder2007 %>% arrange(desc(gdpPercap))
+```
+
+```{r Resultado de la ordenaci?n descendente, echo=FALSE, results='asis'}
+knitr::kable(gapminder2007OrdDesc, format = 'html')
+``` 
+
+**Ejercicio**: Ahora os inivitamos a encontrar y mostrar los 10 pa?ses m?s ricos en t?rminos relativos (renta per c?pita) del mundo en 2007:
+
+```{r Ejercicio 5: Mostrar los 10 pa?ses m?s ricos del mundo (en PIB) en 2007}
+
+```
+#### mutate
+
+Otro verbo especialmente interesante para el tratamiento de datos es el verbo **mutate**.
+Este verbo permite cambiar los valores que existen en una de nuestras variables, bas?ndonos en su valo y en el de las otras variables, e incluso nos permitir? crear nuevas variables calculadas (ojo el c?lculo se hace una sola vez, cuando el verbo se ejecuta, y lo que se guarda en el dataframe es el valor calculado, es decir, ese valor no se auto-actualiza cuando cambiamos otras variables, no es un "trigger").
+
+
+Por ejemplo, imaginemos que deseamos almacenar el tama?o de la poblaci?n de los paises en lugar de en individuos en millones de individuos, podr?amos hacerlo de la siguiente manera:
+```{r Modificaci?n de columnas}
+gapminderMill <- gapminder %>% mutate(pop=pop/1000000)
+```
+
+```{r Resultado de la modificaci?n de columnas, echo=FALSE, results='asis'}
+knitr::kable(gapminderMill[1:10,], format = 'html')
+``` 
+
+**Ejercicio:** Es importante resaltar en este punto que no estamos modificando los datos almacenados en la variable gapminder, sino que se est? devolviendo un nuevo dataframe con los datos cambiados. Compru?balo:
+
+```{r Ejericio 6: comprobar que mutate devuelve otro dataset, echo=FALSE, results='asis'}
+
+``` 
+
+
+Tambi?n podemos a?adir una nueva variable a nuestro dataframe, sencillamente basta con darle un nombre distinto al elemento que asignamos a nuestros c?lculos. Por ejemplo, podr?a ser interesante trabajar con el producto interior bruto total de los paises, no con su valor por habitante. Para ello:
+
+```{r Creaci?n de nuevas variables}
+gapminderGDP <- gapminder %>% mutate(gdp=gdpPercap*pop)
+```
+
+```{r Resultado de la creaci?n de nuevas variables, echo=FALSE, results='asis'}
+knitr::kable(gapminderGDP[1:10,], format = 'html')
+``` 
+
+
+
+**Ejercicio**: Ahora podemos preguntarnos ?Cu?les son los paises m?s ricos en t?rminos absolutos (aquellos con el producto interior bruto mayor) en 2007?
+
+```{r Ejercicio 7: Buscar los paises m?s ricos en PIB en 2007}
+
+```
+
+** ?Por qu? no est? noruega ah??**
+
+#### sumarize
+
+Otro verbo extremadamente ?til en la fase de limpieza, transformaci?n, y exploraci?n de los datos es **summarize**.
+Este verbo nos ayudar? a entender la estructura y contenido de nuestros datos, para poder ser m?s efectivos a la hora de generar informaci?n valiosa o modelos a partir de los mismos.
+
+El verbo **summarize** permite generar una ?nica observaci?n o dato a partir de un conjunto de ellos. Por ejemplo, nos permitir? responder a la pregunta de ¿cual era la esperanza de vida media mundial en el 2007?
+
+```{r Uso de la funci?n summarize}
+espVida2007<- gapminder %>% 
+  filter(year==2007) %>%  
+  summarize(meanLifeExp=mean(lifeExp))
+```
+
+```{r Resultado de summarize, echo=FALSE, results='asis'}
+knitr::kable(espVida2007, format = 'html')
+``` 
+
+**Ejercicio**: ?C?mo creeis que ser? la esperanza de vida en Asia?
+```{r Ejercicio 8: C?lculo de la esperanza de vida en Asia}
+
+```
+
+**Ejercicio**: ?Y en ?frica?
+
+```{r C?lculo de la esperanza de vida en ?frica}
+
+```
+
+El verbo summariize no s?lo nos permite calcular medias, sino que incorpora todo un conjunto de funciones de agregaci?n de inter?s, por ejemplo, para calcular la poblaci?n total reflejada en el dataset en 2007, podr?amos hacer:
+
+```{r C?lculo de experanza de vida media y poblaci?n total de ?frica}
+africatotal <- gapminder %>% 
+  filter(year==2007 & continent=="Africa") %>%
+  summarize(meanifeExpAfrica=mean(lifeExp),
+            totalPop=sum(pop))
+```
+
+```{r Resultado con poblaci?n total y esperanza de vida media, echo=FALSE, results='asis'}
+knitr::kable(africatotal, format = 'html')
+``` 
+
+
+
+Otras funciones de inter?s son _median_, _min_, _max_, _range_, etc.
+
+#### group_by
+
+Otro verbo muy importante para extraer y agrupar informaci?n de inter?s en nuestros dataframes es **group_by**, este verbo nos permite negerar varios subconjuntos de datos en base a los varlores de las variables, sobre los que depu?s podremos aplicar los dem?s verbos, y especialmente summarize.
+
+As? si queremos sacar la experanza de vida media y pobalci?n total a lo largo del tiempo, podemos hacer:
+
+```{r Agrupaci?n de datos}
+espVidaHist <- gapminder %>%
+                group_by(year) %>%
+                summarize(meanLifeExp = mean(lifeExp),
+                          totalPop = sum(as.numeric(pop)))
+```
+
+```{r Resultado de la agrupaci?n de datos,echo=FALSE, results='asis'}
+knitr::kable(espVidaHist, format = 'html')
+``` 
+
+
+Hay un detalle sutil aqu?, f?jate en que al especificar la funci?n que calcula la poblaci?n total, hemos transformado el valor a n?mero en coma flotante (usando la funci?n as.numeric). 
+
+**Ejercicio**: ?Se te ocurre porqu?? Intenta hacer los mismo sin realizar la conversi?n y observa el resultado de la salida:
+
+```{r Ejercicio 8: C?clulo de la poblaci?n total por a?o sin conversi?n de tipos}
+
+```
+
+
+Podemos obtener la experanza de vida media y la poblaci?n por continente en 2007 combinando una agrupaci?n por continente y un flitro:
+
+```{r C?lculo de la esperanza de vida media por continente}
+espVidaPorCont <- gapminder %>%
+                    filter(year == 2007) %>%
+                    group_by(continent) %>%
+                    summarize(meanLifeExp = mean(lifeExp),
+                              totalPop = sum(as.numeric(pop)))
+```
+
+```{r Resultado de la esperanza de vida media por continente, echo=FALSE, results='asis'}
+knitr::kable(espVidaHist, format = 'html')
+``` 
+
+Por ?ltimo, podemos agrupar por m?s de una columna, por ejemplo, podemos sacar la evoluci?n de poblaci?n total y esperanza de vida media a lo largo del tiempo por continente:
+```{r C?lculo de poblaci?n y esperanza de vida por a?o y continente}
+espVidaHistPorCont <- gapminder %>%
+  group_by(year, continent) %>%
+  summarize(totalPop = sum(as.numeric(pop)),
+            meanLifeExp = mean(lifeExp))
+```
+
+```{r Resultado del c?lculo, echo=FALSE, results='asis'}
+knitr::kable(espVidaHistPorCont, format = 'html')
+``` 
+
+## Otros tratamientos de inter?s
+
+A veces cuando intentamos aplicar un algorimto con un prop?sito concreto a un conjunto de datos nos interesa generar versiones del dataset adaptadas para el funcionamiento de dichos algoritmos que no tienen porqu? seguir los principios de tidy data. En esta ?ltima secci?n mostraremos como realizar algunos de los casos m?s comunes de este tipo de transformaciones.
+
+### Eliminar datos faltantes
+
+Lo primero que hay que hacer es identificar el conjunto de valores que representan valores faltantes, por ejemplo muchas veces nos encontramos con valores que contienen la cadena vac?a cuando en realidad el dato falta. Lo ideal es que si el dato falta, lo que apareza en el valora asociados a su observaci?n en la variable correspondiente sea el valor **NA**. A?n cuando todos los datos que en realidad son faltantes aparecen en nuestro conjunto de datos como tales.
+Algunos algoritmos no admiten la existencia de datos faltantes en el conjunto de datos que se les pasa como par?metro. Cuando se nos presenta esta situaci?n tenemos 2 alternativas:
+ 
+ 1. *Eliminar las filas con datos faltantes*. Esto puede hacerse cuando el volumen de datos faltantes es bajo y tenemos datos suficientes como para que el algoritmo y sus resultados no se vean muy afectados por la eliminaci?n (hay que tener en cuenta que si el patr?n de datos faltantes no es aleatorio esto puede introducir un sesgo en el modelo o los resultados generados por el algoritmo a aplicar). Esta estrategia se implementa facilmente usando el verbo filter o aplicando una transformaci?n con el par?mentro _na.rm=TRUE_.
+ 
+ **Ejercicio**: Guardar en un nuevo dataset la versi?n de observaciones completas (sin NAs) del siguiente:
+```{r Ejercicio 9: Sacar conjunto de datos nuevo con observaciones completas}
+df <- tibble(x = c(1, 2, 2),y = c(1, 2, NA))
+```
+
+```{r Mostrar aqu? el resultado, echo=FALSE, results='asis'}
+knitr::kable(df, format = 'html')
+``` 
+
+
+2. Rellenar los datos faltantes con valores "coherentes" con el resto de datos del conjunto de datos y el algoritmo que queremos aplicar. Aqu? la clave est? en c?mo definimos esa coherencia, esencialmente hay 3 mecanismos:
+* _Usar el valor de la observaci?n inmediatamente anterior_. Esto se hace mucho cuando los datos han sido introducidos directamente por personas, que prefieren no repetir en cada observaci?n el mismo valor (y lo dejan en blanco). Para implementar este mecanismos de tratamiento tenemos a nuestra disposici?n la funci?n **fill()** que toma como par?metro un conjunto e nombres de columnas y rellena los datos faltantes en cada una con el valor que contiene la observaci?n anterior.
+* _Usar la media/mediana/moda de la columna como valor_. Esta estrategia es muy f?cil de implementar usando el verbo mutate , la funci?n replace_na, y la correspondiente funci?n o valor a calcular. Por ejemplo:
+
+```{r Ejemplo de rellenado de datos faltantes con media}
+df <- tibble(x = c(1, 2, 2),y = c(1, 2, NA))
+
+df <- df %>% mutate(y = replace_na(y, mean(df$y,na.rm=T)))
+```
+```{r Resultado del rellenado de datos con media,echo=FALSE, results='asis'}
+knitr::kable(df, format = 'html')
+``` 
+
+* _Usar un modelo de alg?n tipo (por ejemplo lineal) para general el valor en base al valor de otras columnas del conjunto de datos_. Para ello contamos con la funci?n predict, que toma como par?metro un modelo y genera un valor, y que podemos usar junto con el verbo mutate. Por ejemplo:
+
+```{r Ejemplo de rellenado de datos faltantes con modelo lineal}
+df <- tibble(x = c(1, 2, 2),y = c(1, 2, NA))
+
+df
+
+# Calucamos el modelo indicando que no tenga en cuenta los valores faltantes:
+bmmodelo <- lm(y~x,data=df,na.action=na.exclude)
+
+summary(modelo)
+
+df <- df %>% mutate(y=predict(modelo,.))
+```
+```{r Resultado del rellenado de datos,echo=FALSE, results='asis'}
+knitr::kable(df, format = 'html')
+``` 
+
+### Reformatear un factor como un conjunto de columnas booleanas/binarias
+
+Algunos algoritmos no soportan el uso de factores sino que requieren el uso de columnas booleanas/binarias, podemos usar las funcion **spread**, o las funciones **mutate** junto con **ifelse** o **case_when** para realizar esta transformaci?n.
+Ejemplos:
+```{r Dataset de ejemplo para la tansformaci?n de factores en variables binarias}
+df <- tibble(x = c("a", "b", "b"),y = c(1, 2, NA))
+
+```
+```{r Contenido del dataset, echo=FALSE, results='asis'}
+knitr::kable(df, format = 'html')
+``` 
+```{r Transformaci?n del dataset usando mutate y spread}
+dfspread <- df %>%  mutate(value = 1) %>%
+                    spread(x, value, fill = 0)
+```
+```{r Resultado usando mutate y spread, echo=FALSE, results='asis'}
+knitr::kable(dfspread, format = 'html')
+``` 
+```{r Transformaci?n del dataset con if-else}
+dfifelse <- df %>% mutate(x,a=ifelse(x=="a",1,0),b=ifelse(x=="b",1,0))
+```
+```{r Resultado con if-else, echo=FALSE, results='asis'}
+knitr::kable(dfifelse, format = 'html')
+``` 
+```{r Transformaci?n del dataset con case_when}
+dfcasewhen <- df %>% mutate(
+    a = case_when(
+            x == "a" ~ 1,
+            x == "b" ~ 0
+),
+    b=case_when(
+            x == "b" ~ 1,
+            x == "a" ~ 0
+))
+```
+
+
+```{r Resultado de transformaci?n con case_when,echo=FALSE, results='asis'}
+knitr::kable(dfcasewhen, format = 'html')
+``` 
+### Limpiar caracteres raros y especiales de las cadenas y los factores
+
+Muchos algoritmos no aceptan el uso de valores con car?cteres que no sean UTF-8, o incluso ASCII en las cadenas y los factores por ello es importante conoce la funciones **replace_non_ascii** (del paquete **textclean**) y **sanitize**. Por ejemplo:
+
+
+```{r Limpieza de caracteres especiales}
+install.packages("textclean")
+library(textclean)
+astr <- "Ábcdêãçoà?ü"
+
+astr
+
+replace_non_ascii(astr)
+```
+
+## Ejercicios adicionales:
+
+### Ejercicio 1
+
+El dataset _who_ continene informaci?n sobre casos de tuberculosis por a?o, pa?s, edad del paciente, y m?todo de diagn?stico. Los datos vienen del informe de las Organizaci?n Mundal de la Salud sobre esa enfermedad del 2014, disponbile [aqu?](http://www.who.int/tb/country/data/download/en/).
+Hay mucha informaci?n informaci?n en este conjunto de datos, pero es dif?cil trabajar con ?l por culpa de: 
+
+* Columnas redundantes (country, iso2, y iso3)
+* Variables codificadas de forma ex?tica (las columnas new_sp_m014, new_ep_m014, new_ep_f014,... tienen toda la pinta de estar codificando en realidad valores y no variables)
+* Montones de valores faltantes .
+
+En cuanto a la codificaci?n de los valores en las variables, tras consultar con los creadores del conjunto de datos nos indicaron que:
+
+1. Las primeras 3 letras de cada columna denotan si la columna conteine casos nuevos o antiguos (cada a?o). En nuestro caso solo se contaban los casos nuevo por lo que siempre ser? "new".
+
+2. Las siguientes letras  denotan el tipo de tuberculosis:
+
+* rel significa casos de reca?da en la enfermedad
+* ep significa casos de tuberculosis extra-pulmonar
+* sn significa caoss de tuberculosis pulmonar que no pudo ser diagnosticada con un frotis pulmonar
+* sp significa caoss de tuberculosis pulmonar que no pudo ser diagnosticada con un frotis pulmonar
+
+3. La sexta letra indica el sexo de los pacientes, agrupados en machos (m) y hembras (f).
+
+Los siguientes n?meros codifican el grupo de edad. Se contemplan siete grupos de edad:
+
+* 014 = 0 a 14 a?os
+* 1524 = 15 a 24 a?os
+* 2534 = 25 a 34 a?os
+* 3544 = 35 a 44 a?os
+* 4554 = 45 a 54 a?os
+* 5564 = 55 a 64 a?os
+* 65 = 65 o m?s a?os
+
+
+```{r Estructura del dataset de ejemplo}
+str(who)
+```
+
+
+```{r Contenido del dataset de ejemplo, echo=FALSE, results='asis'}
+knitr::kable(who[1:10,], format = 'html')
+```
+Desgraciadamente, las personas que tomaron los datos fueron ligeramente inconsistentes, y tenemos casos en los que los valores en lugar de '_new_rel_' ponen '_newrel_'. Puede usar **mutate** y la funci?n **stringr::str_replace(columna,"cadena_a_encontrar","reemplazo">)** para solventar este problema.
+
+Recuerde que si desea especificar todo el conjunto de columnas entre **new_sp_m014** y **newrel_f65_** puede escribir **_new_sp_m014:newrel_f65**.
+
+1. Transforme el conjunto de datos _who_ en un conjunto llamado _tidyWho_ que siga los principios de tidy data.
+```{r}
+
+```
+2. Compruebe si realmente las columnas country, iso2 y iso3 son redundates.
+```{r}
+
+```
+3. Comprueba el n?mero de casos por pa?s, a?o, y sexo. Piense como podr?amos representar visualmente dicha informaci?n y describa dicha gr?fica (si lo desea puede intentar generarla usando la librer?as b?sicas de R o ggplot2).
+```{r}
+
+```
+
